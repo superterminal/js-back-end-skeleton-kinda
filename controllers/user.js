@@ -14,6 +14,7 @@ module.exports = {
     logout: function (req, res) {
       const token = req.cookies[appConfig.authCookieName];
       models.tokenBlacklistModel.create({ token }).then(() => {
+        res.clearCookie(['username']);
         res.clearCookie(appConfig.authCookieName).redirect('/');
       });
     }
@@ -29,31 +30,33 @@ module.exports = {
             return;
           }
           const token = utils.jwt.createToken({ id: user._id });
+          res.cookie(['username'], username);
           res.cookie(appConfig.authCookieName, token).redirect('/');
         });
     },
     register: function (req, res, next) {
-      let result;
-      const errors = validationResult(req);
+      //let result;
+      //const errors = validationResult(req);
       const { username, password, repeatPassword } = req.body;
 
-      if (!errors.isEmpty()) {
-        result = Promise.reject({ name: 'ValidationError', errors: errors.errors });
-      } else {
-        result = models.userModel.create({ username, password });
-      }
+      // if (!errors.isEmpty()) {
+      //   result = Promise.reject({ name: 'ValidationError', errors: errors.errors });
+      // } else {
+      //   result = models.userModel.create({ username, password });
+      // }
 
-      return result.then(() => {
-        res.redirect('/login');
-      }).catch(err => {
-        if (err.name === 'ValidationError') {
-          res.render('register.hbs', {
-            errors: err.errors
+      models.userModel.create({ username, password})
+          .then(() => {
+            res.redirect('/login');
+          }).catch(err => {
+            if (err.name === 'ValidationError') {
+              res.render('register.hbs', {
+                errors: err.errors
+              });
+              return;
+            }
+            next(err);
           });
-          return;
-        }
-        next(err);
-      });
     }
   }
 };

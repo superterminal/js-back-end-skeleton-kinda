@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const handlebars = require('express-handlebars');
 const cookieParser = require('cookie-parser');
+const appConfig = require('../app-config');
 const secret = 'secret';
 
 module.exports = (app) => {
@@ -16,6 +17,14 @@ module.exports = (app) => {
             layoutsDir: __basedir + '/views/layouts/'
         }
     ));
+    
+    app.use((req, res, next) => {
+        res.locals.isLoggedIn = req.cookies[appConfig.authCookieName] !== undefined;
+        res.locals.username = req.cookies['username'];
+
+        next();
+    })
+
     app.set('views', path.resolve(__basedir, 'views'));
 
 };
